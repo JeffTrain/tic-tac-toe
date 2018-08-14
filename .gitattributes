@@ -1,0 +1,4 @@
+.gitattributes text eol=lf
+.gitignore text eol=lf
+README.md eol=lf
+*.js eol=lf
