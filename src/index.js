@@ -43,6 +43,26 @@ class Board extends React.Component {
     }
 }
 
+function nextStep(squares = null) {
+    if (squares === null) {
+        return Math.round(Math.random() * 8);
+    } else {
+        let nullIndice = [];
+
+        for (let i = 0; i < squares.length; i++) {
+            if (squares[i] === null) {
+                nullIndice.push(i)
+            }
+        }
+
+        if (nullIndice.length < 1) {
+            alert('没有可以走的空位了')
+        }
+        
+        return nullIndice[Math.round(Math.random() * (nullIndice.length - 1))]
+    }
+}
+
 class Index extends React.Component {
     constructor(props) {
         super(props);
@@ -55,6 +75,10 @@ class Index extends React.Component {
             stepNumber: 0,
             xIsNext: true
         };
+    }
+
+    componentDidMount() {
+        this.handleClick(nextStep())
     }
 
     handleClick(i) {
@@ -73,6 +97,10 @@ class Index extends React.Component {
             ]),
             stepNumber: history.length,
             xIsNext: !this.state.xIsNext
+        }, () => {
+            if (this.state.xIsNext) {
+                this.handleClick(nextStep(this.state.history[this.state.stepNumber - 1].squares));
+            }
         });
     }
 
