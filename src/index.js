@@ -58,6 +58,8 @@ let w0 = 1;
 let w1 = 1;
 let w2 = 0;
 
+let lastSquares = null;
+
 /**
  * @return {number}
  * V: 目标函数
@@ -66,6 +68,31 @@ let w2 = 0;
  */
 function V(x1, x2) {
     return w0 + w1 * x1 + w2 * x2;
+}
+
+function learn(estimateScore, newSquares) {
+    let actualScore = estimateScore;
+
+    let winner = calculateWinner(newSquares);
+    if (winner === 'X') {
+        actualScore = 100;
+    }
+    if (winner === 'O') {
+        actualScore = -100;
+    }
+    if (winner === null && newSquares.filter(s => s === null).length === 0) {
+        actualScore = 0;
+    }
+
+    let diff = estimateScore - actualScore;
+    if (diff !== 0) {
+        w0 = w0 + 0.1 * diff * w0;
+        w1 = w1 + 0.1 * diff * w1;
+        w2 = w2 + 0.1 * diff * w2;
+
+        console.log('w0 = ', w0, 'w1 = ', w1, 'w2 = ', w2)
+    }
+    return estimateScore;
 }
 
 function calculateScore(newSquares) {
@@ -95,7 +122,6 @@ function generateBoards(squares, nullIndice) {
         result.push({squares: newSquares, score: calculateScore(newSquares), index: nullIndice[i]})
     }
 
-    console.log(result);
     return result;
 }
 
@@ -104,13 +130,21 @@ function selectBestScore(squares, nullIndice) {
 
     let maxScore = -Infinity;
     let bestChoice = -1;
+    let bestSquares = null;
     for (let i = 0; i < boards.length; i++) {
-        const {score, index} = boards[i]
+        const {score, index, squares} = boards[i]
         if (score > maxScore) {
             maxScore = score;
             bestChoice = index;
+            bestSquares = squares;
         }
     }
+
+    if (bestSquares !== null) {
+        lastSquares = bestSquares;
+    }
+
+    learn(maxScore, lastSquares);
 
     return bestChoice;
 }
@@ -141,7 +175,10 @@ class Index extends React.Component {
                 }
             ],
             stepNumber: 0,
-            xIsNext: true
+            xIsNext: true,
+            w0: w0,
+            w1: w1,
+            w2: w2
         };
     }
 
@@ -168,6 +205,7 @@ class Index extends React.Component {
         }, () => {
             if (this.state.xIsNext) {
                 this.handleClick(aiNextSteps(squares));
+                this.forceUpdate();
             }
         });
     }
