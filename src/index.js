@@ -2,6 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './game.css';
 
+const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+];
+
 function Square(props) {
     return (
         <button className="square" onClick={props.onClick}>
@@ -43,6 +54,67 @@ class Board extends React.Component {
     }
 }
 
+let w0 = 1;
+let w1 = 1;
+let w2 = 0;
+
+/**
+ * @return {number}
+ * V: 目标函数
+ * x1: 受到威胁的边的数量
+ * x2: 占中优势
+ */
+function V(x1, x2) {
+    return w0 + w1 * x1 + w2 * x2;
+}
+
+function calculateScore(newSquares) {
+    let x2 = newSquares[4] === 'X' ? 1 : -1;
+
+    let x1 = 0;
+    for (let i = 0; i < lines.length; i++) {
+        const [a, b, c] = lines[i];
+
+        if ((a === 'O' && b === 'O' && c === null) ||
+            (a === 'O' && b === null && c === 'O') ||
+            (a === null && b === 'O' && c === 'O')) {
+            x1 += 1;
+        }
+    }
+
+    return V(x1, x2);
+}
+
+function generateBoards(squares, nullIndice) {
+    let result = [];
+
+    for (let i = 0; i < nullIndice.length; i++) {
+        let newSquares = squares.slice(0);
+        newSquares[nullIndice[i]] = 'X';
+
+        result.push({squares: newSquares, score: calculateScore(newSquares), index: nullIndice[i]})
+    }
+
+    console.log(result);
+    return result;
+}
+
+function selectBestScore(squares, nullIndice) {
+    let boards = generateBoards(squares, nullIndice);
+
+    let maxScore = -Infinity;
+    let bestChoice = -1;
+    for (let i = 0; i < boards.length; i++) {
+        const {score, index} = boards[i]
+        if (score > maxScore) {
+            maxScore = score;
+            bestChoice = index;
+        }
+    }
+
+    return bestChoice;
+}
+
 function aiNextSteps(squares) {
     let nullIndice = [];
 
@@ -56,7 +128,7 @@ function aiNextSteps(squares) {
         alert('没有可以走的空位了')
     }
 
-    return nullIndice[Math.round(Math.random() * (nullIndice.length - 1))]
+    return selectBestScore(squares, nullIndice);
 }
 
 class Index extends React.Component {
@@ -95,7 +167,7 @@ class Index extends React.Component {
             xIsNext: !this.state.xIsNext
         }, () => {
             if (this.state.xIsNext) {
-                this.handleClick(aiNextSteps(this.state.history[this.state.stepNumber - 1].squares));
+                this.handleClick(aiNextSteps(squares));
             }
         });
     }
@@ -152,16 +224,6 @@ class Index extends React.Component {
 ReactDOM.render(<Index/>, document.getElementById("root"));
 
 function calculateWinner(squares) {
-    const lines = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
-    ];
     for (let i = 0; i < lines.length; i++) {
         const [a, b, c] = lines[i];
         if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
