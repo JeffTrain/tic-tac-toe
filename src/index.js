@@ -56,7 +56,7 @@ class Board extends React.Component {
 
 let w0 = 1;
 let w1 = 1;
-let w2 = 0;
+let w2 = 1;
 
 let lastSquares = null;
 let lastScore = null;
@@ -94,11 +94,29 @@ function learn(newSquares) {
         actualScore = calculateScore(newSquares);
     }
 
-    let diff = lastScore - actualScore;
+    let diff = -(lastScore - actualScore);
+    let learningSpeed = 0.2;
     if (diff !== 0) {
-        w0 = w0 + 0.1 * diff * w0;
-        w1 = w1 + 0.1 * diff * w1;
-        w2 = w2 + 0.1 * diff * w2;
+        let res = w0 + learningSpeed * diff * w0;
+        if (isFinite(res)) {
+            w0 = res;
+        } else {
+            console.log('skip updating w0', w0, diff);
+        }
+
+        res = w1 + learningSpeed * diff * w1;
+        if (isFinite(res)) {
+            w1 = res;
+        } else {
+            console.log('skip updating w1', w1, diff);
+        }
+
+        res = w2 + learningSpeed * diff * w2;
+        if (isFinite(res)) {
+            w2 = res;
+        } else {
+            console.log('skip updating w2', w2, diff);
+        }
     }
 
     console.log('iteration = ', i, 'w0 = ', w0, 'w1 = ', w1, 'w2 = ', w2)
