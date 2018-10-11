@@ -59,6 +59,8 @@ let w1 = 1;
 let w2 = 0;
 
 let lastSquares = null;
+let lastScore = null;
+let i = 0;
 
 /**
  * @return {number}
@@ -70,8 +72,13 @@ function V(x1, x2) {
     return w0 + w1 * x1 + w2 * x2;
 }
 
-function learn(estimateScore, newSquares) {
-    let actualScore = estimateScore;
+function learn(newSquares) {
+    i++;
+    if (lastScore === null) {
+        return;
+    }
+
+    let actualScore = 0;
 
     let winner = calculateWinner(newSquares);
     if (winner === 'X') {
@@ -83,16 +90,18 @@ function learn(estimateScore, newSquares) {
     if (winner === null && newSquares.filter(s => s === null).length === 0) {
         actualScore = 0;
     }
+    if (winner === null && newSquares.filter(s => s === null).length > 0) {
+        actualScore = calculateScore(newSquares);
+    }
 
-    let diff = estimateScore - actualScore;
+    let diff = lastScore - actualScore;
     if (diff !== 0) {
         w0 = w0 + 0.1 * diff * w0;
         w1 = w1 + 0.1 * diff * w1;
         w2 = w2 + 0.1 * diff * w2;
-
-        console.log('w0 = ', w0, 'w1 = ', w1, 'w2 = ', w2)
     }
-    return estimateScore;
+
+    console.log('iteration = ', i, 'w0 = ', w0, 'w1 = ', w1, 'w2 = ', w2)
 }
 
 function calculateScore(newSquares) {
@@ -126,13 +135,15 @@ function generateBoards(squares, nullIndice) {
 }
 
 function selectBestScore(squares, nullIndice) {
+    learn(squares);
+
     let boards = generateBoards(squares, nullIndice);
 
     let maxScore = -Infinity;
     let bestChoice = -1;
     let bestSquares = null;
     for (let i = 0; i < boards.length; i++) {
-        const {score, index, squares} = boards[i]
+        const {score, index, squares} = boards[i];
         if (score > maxScore) {
             maxScore = score;
             bestChoice = index;
@@ -142,9 +153,8 @@ function selectBestScore(squares, nullIndice) {
 
     if (bestSquares !== null) {
         lastSquares = bestSquares;
+        lastScore = maxScore;
     }
-
-    learn(maxScore, lastSquares);
 
     return bestChoice;
 }
@@ -214,6 +224,10 @@ class Index extends React.Component {
         this.setState({
             stepNumber: step,
             xIsNext: (step % 2) === 0
+        }, () => {
+            if (this.state.stepNumber === 0) {
+                this.handleClick(aiNextSteps(this.state.history[0].squares));
+            }
         });
     }
 
